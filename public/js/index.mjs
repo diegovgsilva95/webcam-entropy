@@ -2,8 +2,6 @@ const log = console.log.bind(console)
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
 let entropyQueue = []
-// In the start, it's all zeroes. Wait until values, then start storing.
-let storingEntropy = false
 let cumulatedDebiased = []
 
 async function sendEntropy(data){
@@ -75,7 +73,7 @@ function initCanvas(width = 64, height = 36){
     const canvas = document.createElement("canvas")
     canvas.width = width
     canvas.height = height
-    document.body.appendChild(canvas)
+    // document.body.appendChild(canvas)
 
     const ctx = canvas.getContext("2d", {willReadFrequently: true})
 
@@ -107,6 +105,8 @@ async function drawVideoFrame(){
     for(let i = 0; i < noiseBits.length - 1; i+=2){
         if(noiseBits[i] !== noiseBits[i + 1]) {
             debiased.push(noiseBits[i])
+            if(debiased.length >= 32) // Limiting to 32 bits because 2^32 is already a really big number. Beyond that, it'll NaN.
+                break
         }
     }
 
@@ -125,12 +125,8 @@ async function drawVideoFrame(){
         poweredDebiased.push(curVal)
     }
 
-    if(storingEntropy)
+    if(!isNaN(randomValue) && randomValue !== 0)
         entropyQueue.push(randomValue)
-    else if(randomValue !== 0) {
-        storingEntropy = true
-        entropyQueue.push(randomValue)
-    }
 }
 
 async function flushEntropy(){
