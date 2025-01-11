@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check/Visualize entropy from binary float32</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        body {
+            display: grid;
+            place-items: center;
+            background: #111;
+        }
+        canvas {
+            border: 1px solid #000;
+            image-rendering: pixelated;
+            width: 75%;
+            max-height: calc(80vh - 2px);
+            object-fit: contain;
+        }
+        div {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <canvas></canvas>
+    <div>Uniqueness: <span>?</span></div>
+<script type="module">
+const data = await (await fetch("entropy.bin")).arrayBuffer()
+const canvas = document.querySelector('canvas')
+const ctx = canvas.getContext('2d')
+const float32 = new Float32Array(data)
+const unique = new Set(float32).size
+const uniqueness = unique / float32.length
+document.querySelector("span").innerText = `${unique} out of ${float32.length} (${uniqueness * 100}%)`
+
+const triplets = (float32.length/3)|0 //Beware of large files... I'm just using a small one here.
+const W = (Math.sqrt(triplets) | 0)
+const H = Math.ceil(triplets / W)
+canvas.width = W
+canvas.height = H
+
+const imageData = ctx.createImageData(W, H)
+for(let i = 0; i < triplets; i++){
+    const [r,g,b] = float32.slice(i*3, i*3+3)
+    imageData.data.set([r*255, g*255, b*255, 255], i*4)
+}
+ctx.putImageData(imageData, 0, 0)
+</script>
+</body>
+</html>
